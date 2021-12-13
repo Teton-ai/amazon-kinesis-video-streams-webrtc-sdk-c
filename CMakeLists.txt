@@ -8,14 +8,14 @@ project(KinesisVideoWebRTCClient LANGUAGES C)
 
 # User Flags
 option(ADD_MUCLIBC "Add -muclibc c flag" OFF)
-option(BUILD_DEPENDENCIES "Whether or not to build depending libraries from source" ON)
+option(BUILD_DEPENDENCIES "Whether or not to build depending libraries from source" OFF)
 option(USE_OPENSSL "Use openssl as crypto library" ON)
 option(USE_MBEDTLS "Use mbedtls as crypto library" OFF)
 option(BUILD_STATIC_LIBS "Build all libraries statically. (This includes third-party libraries.)" OFF)
 option(BUILD_OPENSSL_PLATFORM "If buildng OpenSSL what is the target platform" OFF)
 option(BUILD_LIBSRTP_HOST_PLATFORM "If buildng LibSRTP what is the current platform" OFF)
 option(BUILD_LIBSRTP_DESTINATION_PLATFORM "If buildng LibSRTP what is the destination platform" OFF)
-option(BUILD_SAMPLE "Build available samples" ON)
+option(BUILD_SAMPLE "Build available samples" OFF)
 option(ENABLE_DATA_CHANNEL "Enable support for data channel" ON)
 option(INSTRUMENTED_ALLOCATORS "Enable memory instrumentation" OFF)
 
@@ -166,7 +166,7 @@ else()
   set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${MBEDTLS_INCLUDE_DIRS})
 endif()
 
-if (OPEN_SRC_INSTALL_PREFIX)
+if (BUILD_DEPENDENCIES)
   find_library(SRTP_LIBRARIES srtp2 REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
 
   if (LINK_PROFILER)
@@ -190,8 +190,7 @@ endif()
 # usrsctp dont support pkgconfig yet
 find_library(
   Usrsctp
-  NAMES ${USRSCTP_LIBNAME} usrsctp REQUIRED
-  PATHS ${OPEN_SRC_INSTALL_PREFIX}/lib)
+  NAMES ${USRSCTP_LIBNAME} usrsctp REQUIRED)
 
 set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${LIBSRTP_INCLUDE_DIRS}
                           ${CURL_INCLUDE_DIRS} ${LIBWEBSOCKETS_INCLUDE_DIRS})
@@ -313,17 +312,24 @@ if (WIN32)
   target_link_libraries(kvsWebrtcClient PRIVATE "Ws2_32" "iphlpapi")
 endif()
 
+add_library(kvsCommon SHARED ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/Common.c)
+
+target_link_libraries(kvsCommon PRIVATE
+  kvspicUtils
+  kvsCommonLws
+)
+
 if(COMPILER_WARNINGS)
   target_compile_options(kvsWebrtcClient PUBLIC -Wall -Werror -pedantic -Wextra -Wno-unknown-warning-option)
   target_compile_options(kvsWebrtcSignalingClient PUBLIC -Wall -Werror -pedantic -Wextra -Wno-unknown-warning-option)
 endif()
 
-install(TARGETS kvsWebrtcClient kvsWebrtcSignalingClient
+install(TARGETS kvsWebrtcClient kvsWebrtcSignalingClient kvsCommon
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-install(DIRECTORY ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/include/
+install(DIRECTORY ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/include/ ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/
   DESTINATION include
 )
 
