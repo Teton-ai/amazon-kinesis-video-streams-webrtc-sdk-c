@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LOG_CLASS "WebRtcSamples"
 #include "Samples.h"
 
@@ -1493,3 +1497,7 @@ CleanUp:
 
     return retStatus;
 }
+
+#ifdef __cplusplus
+}
+#endif
